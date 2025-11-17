@@ -1,0 +1,159 @@
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import {
+  loginStart,
+  loginSuccess,
+  loginFailure,
+} from "../../features/auth/slices/authSlice";
+import { authApi } from "../../api/auth/authApi";
+import { storeTokens } from "../../utils/tokenUtils";
+import { getErrorMessage } from "../../types/errors";
+
+const CenterLoginPage: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  const { loading = false, error = null } =
+    useAppSelector((state) => state.auth) || {};
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email || !password) {
+      dispatch(loginFailure("Veuillez remplir tous les champs"));
+      return;
+    }
+
+    try {
+      dispatch(loginStart());
+
+      const response = await authApi.centerLogin(email, password);
+
+      if (response.user.role !== "center_owner") {
+        dispatch(loginFailure("Accès réservé aux propriétaires de centres"));
+        return;
+      }
+
+      storeTokens(response.token, response.refreshToken, response.expiresIn);
+      dispatch(loginSuccess(response.user));
+      navigate("/center/dashboard");
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      dispatch(loginFailure(errorMessage));
+    }
+  };
+
+  // SVG des icônes (show/hide)
+  const EyeIcon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+
+  const EyeOffIcon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a20.92 20.92 0 0 1 4.22-5.29M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a20.92 20.92 0 0 1-3.33 4.72M1 1l22 22" />
+    </svg>
+  );
+
+  return (
+    <div className="auth-page">
+      <div className="auth-header">
+        <h2 className="auth-title">Connexion Centre</h2>
+        <p className="auth-subtitle">
+          Accédez à votre espace professionnel pour
+        </p>
+        <p className="auth-subtitle">gérer vos stades et réservations</p>
+      </div>
+
+      <div className="auth-card container-sm">
+        <form className="auth-form" onSubmit={handleSubmit}>
+          {error && <div className="form-error">{error}</div>}
+
+          <div className="form-group">
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="form-input"
+              placeholder="email@votre-centre.com"
+            />
+          </div>
+
+          <div className="form-group password-input">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="form-input password-input"
+              placeholder="Votre mot de passe"
+            />
+            <button
+              type="button"
+              className="eye-btn"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label="Afficher ou masquer le mot de passe"
+            >
+              {showPassword ? EyeOffIcon : EyeIcon}
+            </button>
+          </div>
+
+          <div className="auth-links">
+            <Link to="/forgot-password" className="auth-link">
+              Mot de passe oublié ?
+            </Link>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-primary btn-full"
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+
+          <div className="auth-links">
+            <div className="auth-divider">
+              <span>Retour à l'accueil</span>
+            </div>
+
+            <Link to="/" className="auth-link">
+              Page d'accueil
+            </Link>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default CenterLoginPage;
