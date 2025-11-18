@@ -9,6 +9,7 @@ import {
 import { authApi } from "../../api/auth/authApi";
 import { storeTokens } from "../../utils/tokenUtils";
 import { getErrorMessage } from "../../types/errors";
+// import type { User } from "../../features/auth/types";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -31,21 +32,31 @@ const LoginPage: React.FC = () => {
     try {
       dispatch(loginStart());
 
+      // Appel API pour tous les rôles
       const response = await authApi.login({
         email,
         password,
-        role: "client",
       });
-
-      if (response.user.role !== "client") {
-        dispatch(loginFailure("Accès réservé aux clients"));
-        return;
-      }
 
       storeTokens(response.token, response.refreshToken, response.expiresIn);
 
+      // Redirection basée sur le rôle de l'utilisateur
+      switch (response.user.role) {
+        case 'client':
+          navigate("/booking");
+          break;
+        case 'center_owner':
+          navigate("/center/dashboard");
+          break;
+        case 'super_admin':
+          navigate("/admin/dashboard");
+          break;
+        default:
+          navigate("/booking");
+      }
+
       dispatch(loginSuccess(response.user));
-      navigate("/booking");
+      
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       dispatch(loginFailure(errorMessage));

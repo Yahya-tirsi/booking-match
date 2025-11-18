@@ -1,7 +1,6 @@
 export interface LoginCredentials {
     email: string
     password: string
-    role?: 'client' | 'center_owner' | 'super_admin'
 }
 
 export interface RegisterData {

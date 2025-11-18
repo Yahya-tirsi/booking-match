@@ -4,10 +4,8 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { RoleBasedRoute } from "./RoleBasedRoute";
 import LoginPage from "../pages/client/LoginPage";
 import RegisterPage from "../pages/client/RegisterPage";
-import CenterLoginPage from "../pages/center/CenterLoginPage";
-import AdminLoginPage from "../pages/admin/AdminLoginPage";
 
-// Pages temporaires - à remplacer plus tard
+// Pages temporaires
 const ClientBooking = () => <div>Espace Client - Réservations</div>;
 const CenterDashboard = () => <div>Tableau de Bord Centre</div>;
 const AdminDashboard = () => <div>Panneau Administrateur</div>;
@@ -18,8 +16,6 @@ export const AppRouter: React.FC = () => {
       {/* Routes publiques */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/center/login" element={<CenterLoginPage />} />
-      <Route path="/admin/login" element={<AdminLoginPage />} />
 
       {/* Routes protégées - Client */}
       <Route
@@ -58,7 +54,7 @@ export const AppRouter: React.FC = () => {
       />
 
       {/* Redirection par défaut */}
-      <Route path="/" element={<Navigate to="/booking" />} />
+      <Route path="/" element={<Navigate to="/login" />} />
     </Routes>
   );
 };

@@ -19,32 +19,6 @@ export const authApi = {
     },
 
     /**
-     * Login for center owners
-     */
-    centerLogin: async (email: string, password: string): Promise<AuthResponse> => {
-        const credentials: LoginCredentials = {
-            email,
-            password,
-            role: 'center_owner'
-        }
-        const response = await apiClient.post<AuthResponse>('/auth/login', credentials)
-        return response.data
-    },
-
-    /**
-     * Login for super admin
-     */
-    adminLogin: async (email: string, password: string): Promise<AuthResponse> => {
-        const credentials: LoginCredentials = {
-            email,
-            password,
-            role: 'super_admin'
-        }
-        const response = await apiClient.post<AuthResponse>('/auth/login', credentials)
-        return response.data
-    },
-
-    /**
      * Get current user profile
      */
     getCurrentUser: async (): Promise<User> => {
