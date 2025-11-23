@@ -11,10 +11,21 @@ export const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({
   children,
   allowedRoles,
 }) => {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, loading } = useAppSelector((state) => state.auth);
+
+  // Add loading state
+  if (loading) {
+    return <div>Loading...</div>; 
+  }
+
+  // Debug logging
+  console.log("RoleBasedRoute - User:", user);
+  console.log("RoleBasedRoute - User role:", user?.role);
+  console.log("RoleBasedRoute - Allowed roles:", allowedRoles);
 
   if (!user || !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" />;
+    console.log("Access denied - Redirecting to unauthorized");
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <>{children}</>;

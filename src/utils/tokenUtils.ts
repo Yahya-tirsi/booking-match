@@ -1,7 +1,3 @@
-/**
- * Token management utilities for secure token handling
- */
-
 export interface StoredTokens {
     authToken: string
     refreshToken: string

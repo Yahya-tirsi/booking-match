@@ -29,6 +29,7 @@ const authSlice = createSlice({
             state.isAuthenticated = true
             state.user = action.payload
             state.error = null
+            console.log('✅ Redux state updated with user:', action.payload);
         },
         loginFailure: (state, action: PayloadAction<string>) => {
             state.loading = false

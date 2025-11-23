@@ -13,8 +13,7 @@ import type { RegisterData } from "../../features/auth/types";
 
 const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: "",
     phone: "",
     password: "",
@@ -39,13 +38,8 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();
     setError("");
 
-    if (!formData.firstName.trim()) {
+    if (!formData.fullName.trim()) {
       setError("Veuillez entrer votre prénom");
-      return;
-    }
-
-    if (!formData.lastName.trim()) {
-      setError("Veuillez entrer votre nom");
       return;
     }
 
@@ -74,11 +68,11 @@ const RegisterPage: React.FC = () => {
       dispatch(registerStart());
 
       const registerData: RegisterData = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
+        fullName: formData.fullName.trim(),
         email: formData.email.trim(),
-        phone: formData.phone.trim(),
+        phoneNumber: formData.phone.trim(),
         password: formData.password,
+        role: "client"
       };
 
       const response = await authApi.register(registerData);
@@ -96,7 +90,7 @@ const RegisterPage: React.FC = () => {
       // };
 
       dispatch(registerSuccess(response.user));
-      navigate("/booking");
+      navigate("/login");
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       dispatch(registerFailure(errorMessage));
@@ -154,27 +148,14 @@ const RegisterPage: React.FC = () => {
 
           <div className="form-group">
             <input
-              id="firstName"
-              name="firstName"
+              id="fullName"
+              name="fullName"
               type="text"
               required
-              value={formData.firstName}
+              value={formData.fullName}
               onChange={handleChange}
               className="form-input"
-              placeholder="Entrez votre prénom"
-            />
-          </div>
-
-          <div className="form-group">
-            <input
-              id="lastName"
-              name="lastName"
-              type="text"
-              required
-              value={formData.lastName}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Entrez votre nom"
+              placeholder="Entrez votre nom complet"
             />
           </div>
 
@@ -197,7 +178,7 @@ const RegisterPage: React.FC = () => {
               <input
                 id="phone"
                 name="phone"
-                type="tel"
+                type="text"
                 required
                 value={formData.phone}
                 onChange={handleChange}

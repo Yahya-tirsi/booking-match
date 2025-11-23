@@ -2,13 +2,13 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RoleBasedRoute } from "./RoleBasedRoute";
-import LoginPage from "../pages/client/LoginPage";
+import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/client/RegisterPage";
+import BookingPage from "../pages/client/BookingPage";
+import OwnerDashboardPage from "../pages/admin/OwnerDashboardPage";
 
 // Pages temporaires
-const ClientBooking = () => <div>Espace Client - Réservations</div>;
 const CenterDashboard = () => <div>Tableau de Bord Centre</div>;
-const AdminDashboard = () => <div>Panneau Administrateur</div>;
 
 export const AppRouter: React.FC = () => {
   return (
@@ -16,18 +16,19 @@ export const AppRouter: React.FC = () => {
       {/* Routes publiques */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/booking" element={<BookingPage />} />
 
       {/* Routes protégées - Client */}
-      <Route
+      {/* <Route
         path="/booking"
         element={
           <ProtectedRoute>
-            <RoleBasedRoute allowedRoles={["client"]}>
+            <RoleBasedRoute allowedRoles={["Client"]}>
               <ClientBooking />
             </RoleBasedRoute>
           </ProtectedRoute>
         }
-      />
+      /> */}
 
       {/* Routes protégées - Centre */}
       <Route
@@ -41,13 +42,14 @@ export const AppRouter: React.FC = () => {
         }
       />
 
-      {/* Routes protégées - Admin */}
+      {/* Routes protégées - Owner */}
+
       <Route
-        path="/admin/dashboard"
+        path="/owner/dashboard"
         element={
           <ProtectedRoute>
-            <RoleBasedRoute allowedRoles={["super_admin"]}>
-              <AdminDashboard />
+            <RoleBasedRoute allowedRoles={["Owner"]}>
+              <OwnerDashboardPage />
             </RoleBasedRoute>
           </ProtectedRoute>
         }

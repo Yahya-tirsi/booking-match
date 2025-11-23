@@ -1,16 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
 import {
   loginStart,
   loginSuccess,
   loginFailure,
-} from "../../features/auth/slices/authSlice";
-import { authApi } from "../../api/auth/authApi";
-import { storeTokens } from "../../utils/tokenUtils";
-import { getErrorMessage } from "../../types/errors";
+} from "../features/auth/slices/authSlice";
+import { authApi } from "../api/auth/authApi";
+import { storeTokens } from "../utils/tokenUtils";
+import { getErrorMessage } from "../types/errors";
+import { jwtDecode } from "jwt-decode";
+import type { DecodedToken } from "../features/auth/types";
+// import type { User } from "../features/auth/types";
 
-const CenterLoginPage: React.FC = () => {
+const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,16 +34,32 @@ const CenterLoginPage: React.FC = () => {
     try {
       dispatch(loginStart());
 
-      const response = await authApi.centerLogin(email, password);
-
-      if (response.user.role !== "center_owner") {
-        dispatch(loginFailure("Accès réservé aux propriétaires de centres"));
-        return;
-      }
+      const response = await authApi.login({
+        email,
+        password,
+      });
 
       storeTokens(response.token, response.refreshToken, response.expiresIn);
+
+      const decodedToken: DecodedToken = jwtDecode(response.token);
+
+      const userRole = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
+      switch (userRole) {
+        case "Client":
+          navigate("/booking");
+          break;
+        case "Center_owner":
+          navigate("/center/dashboard");
+          break;
+        case "Owner":
+          navigate("/owner/dashboard");
+          break;
+        default:
+          navigate("/booking");
+      }
+
       dispatch(loginSuccess(response.user));
-      navigate("/center/dashboard");
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       dispatch(loginFailure(errorMessage));
@@ -84,11 +103,11 @@ const CenterLoginPage: React.FC = () => {
   return (
     <div className="auth-page">
       <div className="auth-header">
-        <h2 className="auth-title">Connexion Centre</h2>
+        <h2 className="auth-title">Content de vous revoir,</h2>
         <p className="auth-subtitle">
-          Accédez à votre espace professionnel pour
+          Nous sommes heureux de vous voir ici à nouveau. Entrez votre
         </p>
-        <p className="auth-subtitle">gérer vos stades et réservations</p>
+        <p className="auth-subtitle">adresse e-mail et mot de passe</p>
       </div>
 
       <div className="auth-card container-sm">
@@ -103,19 +122,20 @@ const CenterLoginPage: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="form-input"
-              placeholder="email@votre-centre.com"
+              placeholder="Entrez votre e-mail"
             />
           </div>
 
           <div className="form-group password-input">
             <input
               id="password"
+              name="password"
               type={showPassword ? "text" : "password"}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="form-input password-input"
-              placeholder="Votre mot de passe"
+              className="form-input"
+              placeholder="Entrez votre mot de passe"
             />
             <button
               type="button"
@@ -127,12 +147,6 @@ const CenterLoginPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="auth-links">
-            <Link to="/forgot-password" className="auth-link">
-              Mot de passe oublié ?
-            </Link>
-          </div>
-
           <button
             type="submit"
             disabled={loading}
@@ -142,12 +156,16 @@ const CenterLoginPage: React.FC = () => {
           </button>
 
           <div className="auth-links">
+            <Link to="/forgot-password" className="auth-link">
+              Mot de passe oublié ?
+            </Link>
+
             <div className="auth-divider">
-              <span>Retour à l'accueil</span>
+              <span>ou</span>
             </div>
 
-            <Link to="/" className="auth-link">
-              Page d'accueil
+            <Link to="/register" className="auth-link-btn">
+              Créer un compte
             </Link>
           </div>
         </form>
@@ -156,4 +174,4 @@ const CenterLoginPage: React.FC = () => {
   );
 };
 
-export default CenterLoginPage;
+export default LoginPage;

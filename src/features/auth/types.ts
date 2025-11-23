@@ -3,12 +3,21 @@ export interface LoginCredentials {
     password: string
 }
 
+export interface DecodedToken {
+    aud: string;
+    exp: number;
+    iss: string;
+    name: string;
+    sub: string;
+    'http://schemas.microsoft.com/ws/2008/06/identity/claims/role': string;
+}
+
 export interface RegisterData {
-    firstName: string
-    lastName: string
+    fullName: string
     email: string
     password: string
-    phone: string
+    phoneNumber: string
+    role: string
 }
 
 export interface User {
@@ -16,7 +25,7 @@ export interface User {
     email: string
     name: string
     phone: string
-    role: 'client' | 'center_owner' | 'super_admin'
+    role: 'client' | 'center_owner' | 'owner'
     avatar?: string
     createdAt?: string
     updatedAt?: string
