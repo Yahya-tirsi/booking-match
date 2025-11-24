@@ -8,7 +8,6 @@ import {
 } from "../features/auth/slices/authSlice";
 import { authApi } from "../api/auth/authApi";
 import { storeTokens } from "../utils/tokenUtils";
-import { getErrorMessage } from "../types/errors";
 import { jwtDecode } from "jwt-decode";
 import type { DecodedToken } from "../features/auth/types";
 // import type { User } from "../features/auth/types";
@@ -43,7 +42,12 @@ const LoginPage: React.FC = () => {
 
       const decodedToken: DecodedToken = jwtDecode(response.token);
 
-      const userRole = decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      const userRole =
+        decodedToken[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        ];
+
+      dispatch(loginSuccess(response.user));
 
       switch (userRole) {
         case "Client":
@@ -58,11 +62,21 @@ const LoginPage: React.FC = () => {
         default:
           navigate("/booking");
       }
+    } catch (error: unknown) {
+      const errorString = String(error).toLowerCase();
+      let errorMessage = "Email ou mot de passe incorrect";
 
-      dispatch(loginSuccess(response.user));
-    } catch (err: unknown) {
-      const errorMessage = getErrorMessage(err);
+      if (errorString.includes("email") || errorString.includes("user")) {
+        errorMessage = "Aucun compte trouvé avec cet email";
+      } else if (
+        errorString.includes("password") ||
+        errorString.includes("mot de passe")
+      ) {
+        errorMessage = "Mot de passe incorrect";
+      }
+
       dispatch(loginFailure(errorMessage));
+      return;
     }
   };
 

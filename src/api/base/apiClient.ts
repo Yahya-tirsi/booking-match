@@ -1,4 +1,3 @@
-// apiClient.ts
 import axios from 'axios';
 import { authApi } from '../auth/authApi';
 import type { RefreshTokenResponse } from '../../features/auth/types';
@@ -80,7 +79,7 @@ apiClient.interceptors.response.use(
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('refreshToken');
                 localStorage.removeItem('tokenExpiresAt');
-                window.location.href = '/login';
+
                 return Promise.reject(refreshError);
             }
         }
