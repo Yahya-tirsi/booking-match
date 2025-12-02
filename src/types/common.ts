@@ -5,6 +5,17 @@ export interface ApiError {
     details?: string[]
 }
 
+export interface ResetPasswordRequest {
+    email: string | null;
+    token: string;
+    newpassword: string;
+}
+
+export interface ResetPasswordResponse {
+    message: string;
+    success: boolean;
+}
+
 export interface PaginationParams {
     page?: number
     limit?: number

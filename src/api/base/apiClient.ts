@@ -1,8 +1,6 @@
 import axios from 'axios';
-import { authApi } from '../auth/authApi';
-import type { RefreshTokenResponse } from '../../features/auth/types';
 
-export const apiClient = axios.create({
+export const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || 'https://localhost:5001/api',
     timeout: 10000,
     headers: {
@@ -10,11 +8,8 @@ export const apiClient = axios.create({
     },
 });
 
-// Store the refresh token promise to prevent multiple simultaneous refresh attempts
-let refreshTokenPromise: Promise<RefreshTokenResponse> | null = null;
-
 // Request interceptor - add access token and safe logging
-apiClient.interceptors.request.use(
+api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('authToken');
         if (token) {
@@ -22,68 +17,131 @@ apiClient.interceptors.request.use(
         }
 
         // Safe logging - hide sensitive data
-        if (config.data) {
+        if (config.data && import.meta.env.NODE_ENV === 'development') {
             const safeData = { ...config.data };
 
-            if (safeData.password) safeData.password = '***HIDDEN***';
-            if (safeData.confirmPassword) safeData.confirmPassword = '***HIDDEN***';
-            if (safeData.currentPassword) safeData.currentPassword = '***HIDDEN***';
-            if (safeData.newPassword) safeData.newPassword = '***HIDDEN***';
-        } else {
-            console.log(`${config.method?.toUpperCase()} ${config.url}`, config);
+            // Masquer les mots de passe dans les logs
+            const sensitiveFields = [
+                'password',
+                'confirmPassword',
+                'currentPassword',
+                'newPassword',
+                'oldPassword'
+            ];
+
+            sensitiveFields.forEach(field => {
+                if (safeData[field]) {
+                    safeData[field] = '***HIDDEN***';
+                }
+            });
+
+            console.log('📤 API Request:', {
+                url: config.url,
+                method: config.method,
+                data: safeData,
+                headers: {
+                    ...config.headers,
+                    Authorization: token ? 'Bearer ***' : undefined
+                }
+            });
         }
 
         return config;
     },
     (error) => {
+        console.error('❌ Request interceptor error:', error);
         return Promise.reject(error);
     }
 );
 
-// Response interceptor - handle token refresh
-apiClient.interceptors.response.use(
-    (response) => response,
+// Response interceptor - handle errors (NO token refresh logic)
+api.interceptors.response.use(
+    (response) => {
+        // Log successful responses in development
+        if (import.meta.env.NODE_ENV === 'development') {
+            console.log('📥 API Response:', {
+                url: response.config.url,
+                status: response.status,
+                data: response.data
+            });
+        }
+        return response;
+    },
     async (error) => {
         const originalRequest = error.config;
 
-        // If error is 401 (Unauthorized) and we haven't tried to refresh yet
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
+        // Log error in development
+        if (import.meta.env.NODE_ENV === 'development') {
+            console.error('❌ API Error:', {
+                url: originalRequest?.url,
+                status: error.response?.status,
+                message: error.message,
+                response: error.response?.data
+            });
+        }
 
-            try {
-                // Use existing refresh promise if available to prevent multiple calls
-                if (!refreshTokenPromise) {
-                    refreshTokenPromise = authApi.refreshToken();
-                }
+        // Handle 401 Unauthorized - Token expired or invalid
+        if (error.response?.status === 401) {
+            console.log('🔐 Token expired or invalid');
 
-                const { token, refreshToken } = await refreshTokenPromise;
-                refreshTokenPromise = null;
+            // Clear the invalid token
+            localStorage.removeItem('authToken');
 
-                // Update tokens in localStorage
-                localStorage.setItem('authToken', token);
-                localStorage.setItem('refreshToken', refreshToken);
+            return Promise.reject({
+                ...error,
+                message: 'Session expired. Please login again.'
+            });
+        }
 
-                // Calculate and store token expiration time (default 15 minutes)
-                const expiresIn = 15 * 60 * 1000; // 15 minutes in milliseconds
-                const expiresAt = Date.now() + expiresIn;
-                localStorage.setItem('tokenExpiresAt', expiresAt.toString());
+        // Handle 403 Forbidden - Insufficient permissions
+        if (error.response?.status === 403) {
+            return Promise.reject({
+                ...error,
+                message: 'You do not have permission to perform this action.'
+            });
+        }
 
-                // Update the authorization header
-                originalRequest.headers.Authorization = `Bearer ${token}`;
+        // Handle network errors
+        if (!error.response) {
+            console.error('🌐 Network error:', error.message);
+            return Promise.reject({
+                ...error,
+                message: 'Network error. Please check your connection.'
+            });
+        }
 
-                // Retry the original request
-                return apiClient(originalRequest);
-            } catch (refreshError) {
-                refreshTokenPromise = null;
-                // Refresh failed - logout user
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('tokenExpiresAt');
+        // For all other errors, return a user-friendly message if available
+        const serverMessage = error.response?.data?.message ||
+            error.response?.data?.title ||
+            error.response?.data?.error;
 
-                return Promise.reject(refreshError);
-            }
+        if (serverMessage) {
+            return Promise.reject({
+                ...error,
+                message: serverMessage
+            });
         }
 
         return Promise.reject(error);
     }
 );
+
+// Helper function to check if we have a valid token
+export const hasValidToken = (): boolean => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return false;
+
+    try {
+        // Check JWT expiration if token has proper format
+        if (token.split('.').length === 3) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            if (payload.exp) {
+                const now = Math.floor(Date.now() / 1000);
+                return payload.exp > now;
+            }
+        }
+        return true; 
+    } catch {
+        return false; 
+    }
+};

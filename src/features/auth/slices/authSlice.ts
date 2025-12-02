@@ -2,18 +2,18 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { User } from '../types'
 
 interface AuthState {
-    user: User | null
-    isAuthenticated: boolean
-    loading: boolean
-    error: string | null
+    user: User | null;
+    token: string | null;
+    loading: boolean;
+    error: string | null;
 }
 
 const initialState: AuthState = {
     user: null,
-    isAuthenticated: false,
+    token: null,
     loading: false,
     error: null,
-}
+};
 
 const authSlice = createSlice({
     name: 'auth',
@@ -24,17 +24,13 @@ const authSlice = createSlice({
             state.loading = true
             state.error = null
         },
-        loginSuccess: (state, action: PayloadAction<User>) => {
+        loginSuccess: (state, action: PayloadAction<{ token: string }>) => {
             state.loading = false
-            state.isAuthenticated = true
-            state.user = action.payload
+            state.token = action.payload.token
             state.error = null
-            console.log('✅ Redux state updated with user:', action.payload);
         },
         loginFailure: (state, action: PayloadAction<string>) => {
             state.loading = false
-            state.isAuthenticated = false
-            state.user = null
             state.error = action.payload
         },
 
@@ -45,35 +41,34 @@ const authSlice = createSlice({
         },
         registerSuccess: (state, action: PayloadAction<User>) => {
             state.loading = false
-            state.isAuthenticated = true
             state.user = action.payload
             state.error = null
         },
         registerFailure: (state, action: PayloadAction<string>) => {
             state.loading = false
-            state.isAuthenticated = false
-            state.user = null
             state.error = action.payload
+        },
+
+        // Set user (après login ou refresh)
+        setUser: (state, action: PayloadAction<User>) => {
+            state.user = action.payload
+        },
+
+        // Set token (pour mettre à jour le token)
+        setToken: (state, action: PayloadAction<string>) => {
+            state.token = action.payload
         },
 
         // Logout action
         logout: (state) => {
             state.user = null
-            state.isAuthenticated = false
-            state.loading = false
+            state.token = null
             state.error = null
         },
 
         // Clear errors
         clearError: (state) => {
             state.error = null
-        },
-
-        // Update user profile
-        updateUser: (state, action: PayloadAction<Partial<User>>) => {
-            if (state.user) {
-                state.user = { ...state.user, ...action.payload }
-            }
         },
 
         // Check authentication status (for page refresh)
@@ -87,7 +82,6 @@ const authSlice = createSlice({
     },
 })
 
-// Export all actions
 export const {
     loginStart,
     loginSuccess,
@@ -95,9 +89,10 @@ export const {
     registerStart,
     registerSuccess,
     registerFailure,
+    setUser,
+    setToken,
     logout,
     clearError,
-    updateUser,
     checkAuth,
     authChecked,
 } = authSlice.actions

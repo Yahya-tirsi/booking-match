@@ -1,33 +1,50 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import {
   loginStart,
   loginSuccess,
   loginFailure,
-} from "../features/auth/slices/authSlice";
-import { authApi } from "../api/auth/authApi";
-import { storeTokens } from "../utils/tokenUtils";
+} from "../../features/auth/slices/authSlice";
+import { authApi } from "../../api/auth/authApi";
+import { storeToken } from "../../utils/tokenUtils";
 import { jwtDecode } from "jwt-decode";
-import type { DecodedToken } from "../features/auth/types";
-// import type { User } from "../features/auth/types";
+import type { DecodedToken } from "../../features/auth/types";
+import { useEmailValidation } from "../../shared/hooks/useEmailValidation";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const {
+    checkEmailExists,
+    checkingEmail,
+    emailError,
+    setEmailError,
+    clearEmailError,
+  } = useEmailValidation();
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { loading = false, error = null } =
-    useAppSelector((state) => state.auth) || {};
+  const { loading = false } = useAppSelector((state) => state.auth) || {};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    setEmailError("");
+    setPasswordError("");
+    dispatch(loginFailure(""));
+
     if (!email || !password) {
       dispatch(loginFailure("Veuillez remplir tous les champs"));
       return;
+    }
+
+    const emailExists = await checkEmailExists(email);
+    if (!emailExists) {
+      setEmailError("Aucun compte trouvé avec cet email");
     }
 
     try {
@@ -38,7 +55,7 @@ const LoginPage: React.FC = () => {
         password,
       });
 
-      storeTokens(response.token, response.refreshToken, response.expiresIn);
+      storeToken(response.token);
 
       const decodedToken: DecodedToken = jwtDecode(response.token);
 
@@ -47,7 +64,11 @@ const LoginPage: React.FC = () => {
           "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
         ];
 
-      dispatch(loginSuccess(response.user));
+      dispatch(
+        loginSuccess({
+          token: response.token,
+        })
+      );
 
       switch (userRole) {
         case "Client":
@@ -62,22 +83,21 @@ const LoginPage: React.FC = () => {
         default:
           navigate("/booking");
       }
-    } catch (error: unknown) {
-      const errorString = String(error).toLowerCase();
-      let errorMessage = "Email ou mot de passe incorrect";
-
-      if (errorString.includes("email") || errorString.includes("user")) {
-        errorMessage = "Aucun compte trouvé avec cet email";
-      } else if (
-        errorString.includes("password") ||
-        errorString.includes("mot de passe")
-      ) {
-        errorMessage = "Mot de passe incorrect";
-      }
-
-      dispatch(loginFailure(errorMessage));
-      return;
+    } catch {
+      setPasswordError("Email ou mot de passe incorrect");
+      dispatch(loginFailure("Email ou mot de passe incorrect"));
     }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    clearEmailError();
+    if (emailError) setEmailError("");
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (passwordError) setPasswordError("");
   };
 
   // SVG des icônes (show/hide)
@@ -126,7 +146,7 @@ const LoginPage: React.FC = () => {
 
       <div className="auth-card container-sm">
         <form className="auth-form" onSubmit={handleSubmit}>
-          {error && <div className="form-error">{error}</div>}
+          {passwordError && <div className="form-error">{passwordError}</div>}
 
           <div className="form-group">
             <input
@@ -134,10 +154,23 @@ const LoginPage: React.FC = () => {
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="form-input"
+              onChange={handleEmailChange}
+              className={`form-input ${emailError ? "form-input-error" : ""}`}
               placeholder="Entrez votre e-mail"
             />
+            {emailError && (
+              <div
+                className="field-error"
+                style={{
+                  fontSize: "15px",
+                  color: "red",
+                  textAlign: "left",
+                  marginTop: "5px",
+                }}
+              >
+                {emailError}
+              </div>
+            )}
           </div>
 
           <div className="form-group password-input">
@@ -147,8 +180,10 @@ const LoginPage: React.FC = () => {
               type={showPassword ? "text" : "password"}
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="form-input"
+              onChange={handlePasswordChange}
+              className={`form-input ${
+                passwordError ? "form-input-error" : ""
+              }`}
               placeholder="Entrez votre mot de passe"
             />
             <button
@@ -163,10 +198,14 @@ const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || checkingEmail}
             className="btn btn-primary btn-full"
           >
-            {loading ? "Connexion..." : "Se connecter"}
+            {loading
+              ? "Connexion..."
+              : checkingEmail
+              ? "Vérification..."
+              : "Se connecter"}
           </button>
 
           <div className="auth-links">

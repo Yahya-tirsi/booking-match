@@ -7,8 +7,8 @@ import {
   registerFailure,
 } from "../../features/auth/slices/authSlice";
 import { authApi } from "../../api/auth/authApi";
-import { storeTokens } from "../../utils/tokenUtils";
-import { getErrorMessage } from "../../types/errors";
+import { storeToken } from "../../utils/tokenUtils";
+// import { getErrorMessage } from "../../types/errors";
 import type { RegisterData } from "../../features/auth/types";
 
 const RegisterPage: React.FC = () => {
@@ -23,11 +23,15 @@ const RegisterPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmailError("");
+    setPhoneError("");
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -53,8 +57,16 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
+    const phoneRegex = /^(06|07)\d{8}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setPhoneError(
+        "Le numéro doit commencer par 06 ou 07 et contenir 10 chiffres"
+      );
+      return false;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères");
       return;
     }
 
@@ -72,32 +84,89 @@ const RegisterPage: React.FC = () => {
         email: formData.email.trim(),
         phoneNumber: formData.phone.trim(),
         password: formData.password,
-        role: "client"
+        role: "client",
       };
 
       const response = await authApi.register(registerData);
 
-      storeTokens(response.token, response.refreshToken, response.expiresIn);
-
-      // const user: User = {
-      //   id: response.user.id,
-      //   email: response.user.email,
-      //   name: response.user.name,
-      //   phone: response.user.phone,
-      //   avatar: response.user.avatar,
-      //   createdAt: response.user.createdAt,
-      //   updatedAt: response.user.updatedAt,
-      // };
+      storeToken(response.token);
 
       dispatch(registerSuccess(response.user));
       navigate("/login");
-    } catch (err: unknown) {
-      const errorMessage = getErrorMessage(err);
+    } catch (error: unknown) {
+      let errorMessage = "Erreur lors de l'inscription";
+      let emailSpecificError = "";
+
+      const errorObj = error as {
+        response?: {
+          data?: {
+            DuplicateEmail?: string[];
+            DuplicateUserName?: string[];
+            message?: string;
+          };
+        };
+      };
+
+      if (
+        errorObj.response?.data?.DuplicateEmail?.[0]?.includes(
+          "is already taken"
+        )
+      ) {
+        emailSpecificError = "Cet email est déjà utilisé par un autre compte";
+        errorMessage = "Cet email est déjà utilisé par un autre compte";
+      } else if (errorObj.response?.data?.message) {
+        errorMessage = errorObj.response.data.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      setEmailError(emailSpecificError);
       dispatch(registerFailure(errorMessage));
-      setError(errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  const validatePassword = (password: string) => {
+    const requirements = [
+      {
+        id: 1,
+        text: "Au moins 8 caractères",
+        met: password.length >= 8,
+      },
+      {
+        id: 2,
+        text: "Contient une majuscule",
+        met: /[A-Z]/.test(password),
+      },
+      {
+        id: 3,
+        text: "Contient une minuscule",
+        met: /[a-z]/.test(password),
+      },
+      {
+        id: 4,
+        text: "Contient un chiffre",
+        met: /\d/.test(password),
+      },
+      {
+        id: 5,
+        text: "Contient un caractère spécial",
+        met: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      },
+    ];
+
+    const isPasswordValid = requirements.every((req) => req.met);
+    const metCount = requirements.filter((req) => req.met).length;
+    const totalCount = requirements.length;
+
+    return {
+      requirements,
+      isPasswordValid,
+      metCount,
+      totalCount,
+      strength: metCount / totalCount,
+    };
   };
 
   // SVG des icônes (show/hide)
@@ -138,7 +207,9 @@ const RegisterPage: React.FC = () => {
     <div className="auth-page">
       <div className="auth-header">
         <h2 className="auth-title">Créer un compte</h2>
-        <p className="auth-subtitle">Rejoignez-nous et commencez à réserver vos</p>
+        <p className="auth-subtitle">
+          Rejoignez-nous et commencez à réserver vos
+        </p>
         <p className="auth-subtitle">matchs de sport préférés</p>
       </div>
 
@@ -167,9 +238,17 @@ const RegisterPage: React.FC = () => {
               required
               value={formData.email}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${emailError ? "form-input-error" : ""}`}
               placeholder="Entrez votre e-mail"
             />
+            {emailError && (
+              <div
+                className="field-error"
+                style={{ fontSize: "15px", color: "red", textAlign: "left" }}
+              >
+                {emailError}
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -182,10 +261,20 @@ const RegisterPage: React.FC = () => {
                 required
                 value={formData.phone}
                 onChange={handleChange}
-                className="form-input phone-number"
+                className={`form-input phone-number ${
+                  phoneError ? "form-input-error" : ""
+                }`}
                 placeholder="Entrez votre numéro"
               />
             </div>
+            {phoneError && (
+              <div
+                className="field-error"
+                style={{ fontSize: "15px", color: "red", textAlign: "left" }}
+              >
+                {phoneError}
+              </div>
+            )}
           </div>
 
           {/* Mot de passe */}
@@ -209,6 +298,45 @@ const RegisterPage: React.FC = () => {
               {showPassword ? EyeOffIcon : EyeIcon}
             </button>
           </div>
+          {/* Simple password strength indicator */}
+          {formData.password &&
+            !validatePassword(formData.password).isPasswordValid && (
+              <div className="password-feedback">
+                <div className="strength-meter">
+                  <div
+                    className="strength-bar"
+                    style={{
+                      width: `${
+                        (validatePassword(formData.password).metCount /
+                          validatePassword(formData.password).totalCount) *
+                        100
+                      }%`,
+                      backgroundColor: validatePassword(formData.password)
+                        .isPasswordValid
+                        ? "#c1f11d"
+                        : "#f59e0b",
+                    }}
+                  />
+                </div>
+                <div className="password-hints">
+                  {validatePassword(formData.password).requirements.map(
+                    (req) => (
+                      <span
+                        key={req.id}
+                        className={`password-hint ${req.met ? "met" : "unmet"}`}
+                      >
+                        <span
+                          className={`status-circle ${
+                            req.met ? "met" : "unmet"
+                          }`}
+                        ></span>
+                        {req.text}
+                      </span>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
 
           {/* Confirmation mot de passe */}
           <div className="form-group password-input">

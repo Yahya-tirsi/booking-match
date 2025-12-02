@@ -2,10 +2,12 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RoleBasedRoute } from "./RoleBasedRoute";
-import LoginPage from "../pages/LoginPage";
+import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/client/RegisterPage";
 import BookingPage from "../pages/client/BookingPage";
 import OwnerDashboardPage from "../pages/admin/OwnerDashboardPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPassword";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 
 // Pages temporaires
 const CenterDashboard = () => <div>Tableau de Bord Centre</div>;
@@ -17,6 +19,8 @@ export const AppRouter: React.FC = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/booking" element={<BookingPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Routes protégées - Client */}
       {/* <Route

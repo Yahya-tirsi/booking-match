@@ -1,49 +1,47 @@
-import { apiClient } from '../base/apiClient'
-import type { LoginCredentials, RegisterData, User, AuthResponse } from '../../features/auth/types'
+import { api } from '../base/apiClient'
+import type { LoginCredentials, RegisterData, AuthResponse } from '../../features/auth/types'
+import type { ResetPasswordRequest, ResetPasswordResponse } from '../../types/common';
+// import { encryptionService } from '../../utils/encryption';
 
 export const authApi = {
-    /**
-     * Login user with email, password and role
-     */
     login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-        const response = await apiClient.post<AuthResponse>('/auth/login', credentials)
+        const encryptedCredentials = {
+            email: credentials.email,
+            password: credentials.password, // En clair pour l'instant
+            // encryptedPassword: encryptionService.encryptPassword(credentials.password)
+        };
+        const response = await api.post<AuthResponse>('/auth/login', encryptedCredentials)
         return response.data
     },
 
-    /**
-     * Register new user
-     */
     register: async (userData: RegisterData): Promise<AuthResponse> => {
-        const response = await apiClient.post<AuthResponse>('/auth/register', userData)
+        // const encryptedCredentials = {
+        //     ...userData,
+        //     password: encryptionService.encryptPassword(userData.password)
+        // };
+        const response = await api.post<AuthResponse>('/auth/register', userData)
         return response.data
     },
 
-    /**
-     * Get current user profile
-     */
-    getCurrentUser: async (): Promise<User> => {
-        const response = await apiClient.get<User>('/auth/me')
-        return response.data
+    checkEmailExists: async (data: { email: string }): Promise<{ exists: boolean }> => {
+        const response = await api.get<{ exists: boolean }>(
+            `/auth/check-email/${data.email}`
+        );
+        return response.data;
     },
 
-    /**
-     * Logout user
-     */
+    forgotPassword: async (email: string): Promise<{ message: string; success: boolean }> => {
+        const response = await api.post<{ message: string; success: boolean }>('/auth/forgot-password', { email });
+        return response.data;
+    },
+
+    resetPassword: async (data: ResetPasswordRequest): Promise<ResetPasswordResponse> => {
+        const response = await api.post<ResetPasswordResponse>('/auth/reset-password', data);
+        return response.data;
+    },
+
     logout: async (): Promise<void> => {
-        await apiClient.post('/auth/logout')
+        await api.post('/auth/logout')
         localStorage.removeItem('authToken')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('tokenExpiresAt')
-    },
-
-    /**
-     * Refresh access token
-     */
-    refreshToken: async (): Promise<{ token: string; refreshToken: string }> => {
-        const refreshToken = localStorage.getItem('refreshToken')
-        const response = await apiClient.post<{ token: string; refreshToken: string }>('/auth/refresh', {
-            refreshToken,
-        })
-        return response.data
     },
 }

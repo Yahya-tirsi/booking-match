@@ -51,3 +51,4 @@ export interface BookingFilters {
     maxPrice?: number
     centerId?: string
 }
+
