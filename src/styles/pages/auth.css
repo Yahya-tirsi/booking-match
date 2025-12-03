@@ -261,6 +261,39 @@
   font-size: var(--text-sm);
 }
 
+/**************** Animation for login and register pages **************/
+
+.auth-header {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.auth-header.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.auth-card {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
+}
+
+.auth-card.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.auth-form {
+  opacity: 0;
+  transition: opacity 0.1s ease 0.2s;
+}
+
+.auth-form.visible {
+  opacity: 1;
+}
+
 @media (max-width: 480px) {
   .success-title {
     font-size: var(--text-xl);

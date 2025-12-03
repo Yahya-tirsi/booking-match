@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { authApi } from "../../api/auth/authApi";
+import { usePageAnimation } from "../../shared/hooks/usePageAnimation";
 
 const ResetPasswordPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,13 @@ const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const token = searchParams.get("token");
   const email = searchParams.get("email");
+
+  // For animation
+  const { getStepClass } = usePageAnimation({
+    steps: 3,
+    delay: 50,
+    initialDelay: 100,
+  });
 
   // Password validation function
   const validatePassword = (password: string) => {
@@ -188,16 +196,19 @@ const ResetPasswordPage: React.FC = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-card container-sm">
+      <div className={`auth-card container-sm ${getStepClass(1)}`}>
         {!success ? (
           <>
-            <div className="auth-header">
+            <div className={`auth-header ${getStepClass(2)}`}>
               <h2 className="auth-title">Réinitialiser le mot de passe</h2>
               <p className="auth-subtitle">
                 Créez votre nouveau mot de passe sécurisé
               </p>
             </div>
-            <form className="auth-form" onSubmit={handleSubmit}>
+            <form
+              className={`auth-form ${getStepClass(3)}`}
+              onSubmit={handleSubmit}
+            >
               {error && <div className="form-error">{error}</div>}
 
               {!token && (

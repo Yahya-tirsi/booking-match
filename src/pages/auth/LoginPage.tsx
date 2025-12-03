@@ -11,6 +11,7 @@ import { storeToken } from "../../utils/tokenUtils";
 import { jwtDecode } from "jwt-decode";
 import type { DecodedToken } from "../../features/auth/types";
 import { useEmailValidation } from "../../shared/hooks/useEmailValidation";
+import { usePageAnimation } from "../../shared/hooks/usePageAnimation";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -29,6 +30,13 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
   const { loading = false } = useAppSelector((state) => state.auth) || {};
+
+  // For animation
+  const { getStepClass } = usePageAnimation({
+    steps: 3,
+    delay: 50,
+    initialDelay: 100,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,7 +144,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-header">
+      <div className={`auth-header ${getStepClass(1)}`}>
         <h2 className="auth-title">Content de vous revoir,</h2>
         <p className="auth-subtitle">
           Nous sommes heureux de vous voir ici à nouveau. Entrez votre
@@ -144,8 +152,11 @@ const LoginPage: React.FC = () => {
         <p className="auth-subtitle">adresse e-mail et mot de passe</p>
       </div>
 
-      <div className="auth-card container-sm">
-        <form className="auth-form" onSubmit={handleSubmit}>
+      <div className={`auth-card container-sm ${getStepClass(2)}`}>
+        <form
+          className={`auth-form ${getStepClass(3)}`}
+          onSubmit={handleSubmit}
+        >
           {passwordError && <div className="form-error">{passwordError}</div>}
 
           <div className="form-group">

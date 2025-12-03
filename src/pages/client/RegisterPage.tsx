@@ -10,6 +10,7 @@ import { authApi } from "../../api/auth/authApi";
 import { storeToken } from "../../utils/tokenUtils";
 // import { getErrorMessage } from "../../types/errors";
 import type { RegisterData } from "../../features/auth/types";
+import { usePageAnimation } from "../../shared/hooks/usePageAnimation";
 
 const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -28,6 +29,13 @@ const RegisterPage: React.FC = () => {
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
+  // For animation
+  const { getStepClass } = usePageAnimation({
+    steps: 3,
+    delay: 50,
+    initialDelay: 100,
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmailError("");
@@ -205,7 +213,7 @@ const RegisterPage: React.FC = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-header">
+      <div className={`auth-header ${getStepClass(1)}`}>
         <h2 className="auth-title">Créer un compte</h2>
         <p className="auth-subtitle">
           Rejoignez-nous et commencez à réserver vos
@@ -213,8 +221,11 @@ const RegisterPage: React.FC = () => {
         <p className="auth-subtitle">matchs de sport préférés</p>
       </div>
 
-      <div className="auth-card container-sm">
-        <form className="auth-form" onSubmit={handleSubmit}>
+      <div className={`auth-card container-sm ${getStepClass(2)}`}>
+        <form
+          className={`auth-form ${getStepClass(3)}`}
+          onSubmit={handleSubmit}
+        >
           {error && <div className="form-error">{error}</div>}
 
           <div className="form-group">

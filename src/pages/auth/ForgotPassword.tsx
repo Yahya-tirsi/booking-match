@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { authApi } from "../../api/auth/authApi";
 import { useEmailValidation } from "../../shared/hooks/useEmailValidation";
+import { usePageAnimation } from "../../shared/hooks/usePageAnimation";
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -15,6 +16,13 @@ const ForgotPasswordPage: React.FC = () => {
     setEmailError,
     clearEmailError,
   } = useEmailValidation();
+
+  // For animation
+  const { getStepClass } = usePageAnimation({
+    steps: 3,
+    delay: 50,
+    initialDelay: 100,
+  });
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
@@ -111,17 +119,20 @@ const ForgotPasswordPage: React.FC = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-card container-sm">
+      <div className={`auth-card container-sm ${getStepClass(2)}`}>
         {!success ? (
           <>
-            <div className="auth-header">
+            <div className={`auth-header ${getStepClass(1)}`}>
               <h2 className="auth-title">Mot de passe oublié</h2>
               <p className="auth-subtitle">
                 Entrez votre adresse e-mail pour recevoir un lien de
                 réinitialisation
               </p>
             </div>
-            <form className="auth-form" onSubmit={handleSubmit}>
+            <form
+              className={`auth-form ${getStepClass(3)}`}
+              onSubmit={handleSubmit}
+            >
               {error && <div className="form-error">{error}</div>}
 
               <div className="form-group">
@@ -164,7 +175,7 @@ const ForgotPasswordPage: React.FC = () => {
             </form>
           </>
         ) : (
-          <div className="success-message">
+          <div className={`success-message`}>
             <div className="success-content">
               <div className="success-icon-large">{SuccessIcon}</div>
               <h3 className="success-title">E-mail envoyé avec succès !</h3>
