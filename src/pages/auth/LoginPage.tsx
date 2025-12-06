@@ -85,8 +85,8 @@ const LoginPage: React.FC = () => {
         case "Center_owner":
           navigate("/center/dashboard");
           break;
-        case "Owner":
-          navigate("/owner/dashboard");
+        case "Admin":
+          navigate("/admin/dashboard");
           break;
         default:
           navigate("/booking");

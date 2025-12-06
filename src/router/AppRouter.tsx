@@ -5,7 +5,7 @@ import { RoleBasedRoute } from "./RoleBasedRoute";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/client/RegisterPage";
 import BookingPage from "../pages/client/BookingPage";
-import OwnerDashboardPage from "../pages/admin/OwnerDashboardPage";
+import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPassword";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 
@@ -46,18 +46,8 @@ export const AppRouter: React.FC = () => {
         }
       />
 
-      {/* Routes protégées - Owner */}
-
-      <Route
-        path="/owner/dashboard"
-        element={
-          <ProtectedRoute>
-            <RoleBasedRoute allowedRoles={["Owner"]}>
-              <OwnerDashboardPage />
-            </RoleBasedRoute>
-          </ProtectedRoute>
-        }
-      />
+      {/* Routes protégées - Admin */}
+      <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
 
       {/* Redirection par défaut */}
       <Route path="/" element={<Navigate to="/login" />} />
