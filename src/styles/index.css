@@ -117,6 +117,20 @@ body {
   transform: translateX(3px);
 }
 
+.form-input-error {
+  border-color: var(--color-error) !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1) !important;
+}
+
+.field-error {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .auth-card {
@@ -128,13 +142,13 @@ body {
   }
 
   .auth-page {
-    padding: 0;
+    padding: var(--text-2xl);
   }
-
+  
   .auth-header {
     text-align: left;
   }
-
+  
   .auth-title {
     font-size: var(--text-2xl);
   }
@@ -142,11 +156,13 @@ body {
   .auth-subtitle {
     font-size: var(--text-base);
   }
-
+  
   .auth-link-btn {
     font-size: var(--text-md);
+    text-align: center;
   }
 }
+
 
 /* Responsive pour les cartes */
 @media (max-width: 768px) {
@@ -170,18 +186,5 @@ body {
   }
 }
 
-.form-input-error {
-  border-color: var(--color-error) !important;
-  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1) !important;
-}
-
-.field-error {
-  color: #dc3545;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
 
 

@@ -1,28 +1,37 @@
-import React from "react";
+import { CalendarCheck, Users, PlusSquare } from "lucide-react";
+import { Button } from "../../components/ui/button";
+import "../../styles/pages/admin/admin.css"
 
-const OwnerDashboardPage: React.FC = () => {
+export default function AdminSidebar() {
   return (
-    <div className="owner-dashboard">
-      <h1>Tableau de Bord Propriétaire</h1>
-      <div className="dashboard-content">
-        <div className="stats-grid">
-          <div className="stat-card">
-            <h3>Centres Gérés</h3>
-            <p>5</p>
-          </div>
-          <div className="stat-card">
-            <h3>Réservations Today</h3>
-            <p>24</p>
-          </div>
-          <div className="stat-card">
-            <h3>Revenu Mensuel</h3>
-            <p>€2,450</p>
-          </div>
-        </div>
-        {/* Other dashboard components */}
+    <aside className="sidebar">
+      {/* Logo / Title */}
+      <div className="sidebar-header">
+        <h2>Admin</h2>
       </div>
-    </div>
-  );
-};
 
-export default OwnerDashboardPage;
+      {/* Navigation */}
+      <nav className="sidebar-nav">
+        <a href="/admin/bookings" className="sidebar-link">
+          <CalendarCheck size={18} />
+          <span>Bookings</span>
+        </a>
+
+        <a href="/admin/clients" className="sidebar-link">
+          <Users size={18} />
+          <span>Clients</span>
+        </a>
+
+        <a href="/admin/centers/new" className="sidebar-link primary">
+          <PlusSquare size={18} />
+          <span>Add Center</span>
+        </a>
+      </nav>
+
+      {/* Bottom */}
+      <div className="sidebar-footer">
+        <Button variant="ghost">Logout</Button>
+      </div>
+    </aside>
+  );
+}

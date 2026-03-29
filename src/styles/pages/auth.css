@@ -33,6 +33,10 @@
   padding: var(--space-2xl);
 }
 
+.auth-link-btn{
+  text-align: center;
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;
